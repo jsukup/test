@@ -61,14 +61,14 @@ limiter = Limiter(
 # Configure Caching
 cache = Cache(app, config={'CACHE_TYPE': 'SimpleCache', 'CACHE_DEFAULT_TIMEOUT': 300})
 
-# Create a simple ML model for demo purposes
+# Create a simple ML model (this could be much more complex...)
 def create_demo_model():
     X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
-    y = np.array([0, 1, 1, 0])  # XOR function
+    y = np.array([0, 1, 1, 0])  
     model = RandomForestClassifier(n_estimators=10, random_state=42)
     model.fit(X, y)
     
-    # Save model if it doesn't exist
+    # Save model 
     if not os.path.exists('model.joblib'):
         joblib.dump(model, 'model.joblib')
     
@@ -77,6 +77,7 @@ def create_demo_model():
 # Load or create the model
 model = create_demo_model()
 
+# API Endpoints
 @app.route('/')
 @limiter.limit("10 per minute")
 @cache.cached(timeout=60)
