@@ -1,16 +1,17 @@
-from flask import Flask, jsonify, request
+import json
 import logging
-import numpy as np
-from sklearn.ensemble import RandomForestClassifier
-import joblib
 import os
 from datetime import datetime, timedelta, timezone
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+
 from flasgger import Swagger
+from flask import Flask, jsonify, request
+from flask_caching import Cache
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from flask_caching import Cache
-import json
+import joblib
+import numpy as np
+from sklearn.ensemble import RandomForestClassifier
 
 # Setup logging
 logging.basicConfig(
@@ -29,7 +30,7 @@ app = Flask(__name__)
 app.logger.setLevel(logging.INFO)
 
 # Configure JWT
-app.config['JWT_SECRET_KEY'] = 'super-secret-key'  # Change this in production!
+app.config['JWT_SECRET_KEY'] = 'super-secret-key'  # I just have this as a placeholder
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
 jwt = JWTManager(app)
 
@@ -65,7 +66,7 @@ cache = Cache(app, config={'CACHE_TYPE': 'SimpleCache', 'CACHE_DEFAULT_TIMEOUT':
 def create_demo_model():
     X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
     y = np.array([0, 1, 1, 0])  
-    model = RandomForestClassifier(n_estimators=10, random_state=42)
+    model = RandomForestClassifier(n_estimators=10, random_state=1983)
     model.fit(X, y)
     
     # Save model 
@@ -79,7 +80,7 @@ model = create_demo_model()
 
 # API Endpoints
 @app.route('/')
-@limiter.limit("10 per minute")
+@limiter.limit("10 per minute") # Just an arbitrary value I made up for these examples
 @cache.cached(timeout=60)
 def hello():
     """Main endpoint that returns a greeting message"""
@@ -132,8 +133,8 @@ def login():
     username = request.json.get('username', None)
     password = request.json.get('password', None)
     
-    # In a real app, validate against a database
-    # For demo purposes, accept simple credentials
+    # In a real app, you'd validate against a database
+    # but for demo purposes, it just accepts simple credentials
     if username != 'user' or password != 'password':
         app.logger.warning(f'Failed login attempt for user: {username}')
         return jsonify({"success": False, "error": "Invalid credentials"}), 401
