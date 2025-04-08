@@ -195,6 +195,13 @@ Expected response:
 }
 ```
 
+### Swagger Documentation
+
+```bash
+# Open in browser
+http://localhost:1983/docs/
+```
+
 ### Bonus Features Implemented
 
 1. **JWT Authentication**
@@ -202,6 +209,7 @@ Expected response:
    - Created a login endpoint at `/api/auth/login` 
    - Protected the prediction endpoint with JWT authentication
    - Tokens expire after 1 hour
+   - Added error logging with stack traces
 
 2. **Comprehensive Logging**
    - Enhanced logging with proper formatting
@@ -211,22 +219,32 @@ Expected response:
 
 3. **API Documentation**
    - Added Swagger documentation using Flasgger
-   - API docs available at `/docs/` endpoint
+   - API docs available at `/docs/` endpoint (see dedicated section above)
    - Complete documentation for all endpoints with examples
    - Authentication information included
 
 4. **Unit Tests**
-   - Added comprehensive test suite using pytest
-   - Tests for all endpoints and error scenarios
-   - Authentication testing
-   - Input validation testing
-   - Tests run automatically during Docker build
+   - Added comprehensive test suite using pytest (located in `test_app.py`)
+   - Tests cover success cases for all endpoints (`/`, `/health`, `/api/auth/login`, `/api/v1/predict`).
+   - Includes tests for error handling scenarios:
+     - Invalid routes (404)
+     - Missing or invalid JSON payloads (400)
+     - Incorrect credentials for login (401)
+     - Missing or invalid JWT tokens for protected endpoints (401)
+     - Invalid feature format for prediction (400)
+     - Simulated server errors (500)
+   - Verifies authentication logic, including token generation and validation.
+   - Tests specific input validation cases (e.g., non-numeric features, incorrect feature length).
+   - Tests are automatically discovered and run using `pytest`.
 
 5. **Data Validation and Sanitization**
-   - Added thorough validation for all input data
-   - Type checking and length validation for feature inputs
-   - JSON format validation for requests
-   - Proper error responses for invalid inputs
+   - Implemented thorough validation checks within the API endpoints:
+   - Ensures incoming requests have the `Content-Type: application/json` header where appropriate.
+   - Validates the presence of required fields in JSON payloads (e.g., `username` and `password` for login, `features` for prediction).
+   - Performs type checking on input data (e.g., `features` must be a list of numbers).
+   - Validates the structure and constraints of input data (e.g., `features` list must contain exactly 2 elements).
+   - Returns specific 400 Bad Request errors with informative messages for validation failures.
+   - Note: Explicit data sanitization (e.g., against XSS or SQL injection) is not heavily implemented in this simple demo, but would be crucial in a production application.
 
 6. **Rate Limiting**
    - Implemented rate limiting with Flask-Limiter
@@ -236,17 +254,8 @@ Expected response:
      - Login: 10 requests per minute 
      - Prediction: 30 requests per minute
    - Global limits of 200 requests per day and 50 per hour
-
-7. **Caching Mechanisms**
    - Added response caching with Flask-Caching
    - Home endpoint cached for 60 seconds
    - Health check cached for 10 seconds
-   - Prediction results cached based on input features
-   - Cache utilizes memory storage with 5-minute default timeout
-
-### Swagger Documentation
-
-```bash
-# Open in browser
-http://localhost:1983/docs/
-```
+   - Prediction results cached based on input features (using the feature list as part of the cache key)
+   - Cache utilizes memory storage (`SimpleCache`) with a 5-minute (300 seconds) default timeout.
